@@ -104,7 +104,7 @@ def calc():
         return processed_data
     
     df_xlsx = to_excel(df_new)
-    st.download_button(label='Download Excel file',
+    st.sidebar.download_button(label='Download Excel file',
                                     data=df_xlsx ,
                                     file_name= 'kakakukaitei.xlsx')
 
