@@ -20,6 +20,7 @@ def xls_df_db():
     df = DataFrame()
     if uploaded_file:
         df = pd.read_excel(uploaded_file, sheet_name='Sheet1', index_col=0)
+        st.info('ファイルのアップロードとデータベースへの格納が完了しました。')
     
     global conn
     conn = sqlite3.connect(db_name) 
@@ -27,8 +28,9 @@ def xls_df_db():
     # cbファイルがあれば読み込む。無い場合は自動的に作る。
 
     df.to_sql('kakaku_table', conn, if_exists='replace') #テーブル名、DB
+    conn.close()
 
-    st.markdown('###### success!')
+    
 
 def calc():
     conn = sqlite3.connect(db_name)
@@ -39,6 +41,7 @@ def calc():
     # c.execute(query_select)
     # output = c.fetchall() #リストで取得
     df2 = pd.read_sql_query(query_select, conn) #DBから全情報取り出し　df化
+    conn.close()
 
     rate =st.number_input('UP率を入力してください。　半角数字　％')
     
@@ -86,9 +89,7 @@ def calc():
     df_new = pd.DataFrame(list(zip(series, hinban, buhin1, buhin2, new_ab, new_c, new_e, new_ha, new_hb)), columns=column_list)
     df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype('int')
 
-    st.table(df_new.head(30))
-
-    
+    st.table(df_new)
 
     def to_excel(df):
         output = BytesIO()
@@ -101,18 +102,66 @@ def calc():
         writer.save()
         processed_data = output.getvalue()
         return processed_data
-
+    
     df_xlsx = to_excel(df_new)
     st.download_button(label='Download Excel file',
                                     data=df_xlsx ,
                                     file_name= 'kakakukaitei.xlsx')
 
+def select_series():
+    conn = sqlite3.connect(db_name)
+    #c = conn.cursor()
+    query_select = '''
+    select * from kakaku_table
+    '''
+    # c.execute(query_select)
+    # output = c.fetchall() #リストで取得
+    df_all = pd.read_sql_query(query_select, conn) #DBから全情報取り出し　df化
+
+    conn.close()
+
+    # *** selectbox シリーズ***
+    series_list = df_all['シリーズ'].unique()
+    option_series = st.selectbox(
+        'series:',
+        series_list,   
+    ) 
+
+    df_result = df_all[df_all['シリーズ']== option_series]
+    st.table(df_result)
+
+def select_hinban():
+    conn = sqlite3.connect(db_name)
+    #c = conn.cursor()
+    query_select = '''
+    select * from kakaku_table
+    '''
+    # c.execute(query_select)
+    # output = c.fetchall() #リストで取得
+    df_all = pd.read_sql_query(query_select, conn) #DBから全情報取り出し　df化
+
+    conn.close()
+
+    df_all['頭品番'] = df_all['品番'].str[0:2] #先頭2行の文字列を抽出
+
+    # *** input 品番***
+    hinban = st.text_input('品番を入力　半角英数 大文字', 'SN')
+    st.caption('品番の先頭2文字を入力')
+
+    df_result = df_all[df_all['頭品番']==hinban]
+
+    st.table(df_result)
+
+
 def main():
     # アプリケーション名と対応する関数のマッピング
     apps = {
         '-': None,
+        'シリーズから検索': select_series,
+        '品番から検索': select_hinban,
         'Excel読み込み': xls_df_db,
         '価格改定計算': calc,
+        
         
     }
     selected_app_name = st.sidebar.selectbox(label='作業の選択',
