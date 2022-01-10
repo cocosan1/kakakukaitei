@@ -53,32 +53,47 @@ def calc():
 
     # A-S/A/B
     for a in df2['A-S/A/B']:
-        new_price = a + (a * (rate *0.01))
-        new_price = int((new_price//100)*100) #100円以下切り捨て　//整数部分のみ返す
-        new_ab.append(new_price)
+        if a is None:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 #100円以下切り捨て　//整数部分のみ返す
+            new_ab.append(new_price)
 
     # C
     for a, c in zip(df2['A-S/A/B'], df2['C']):
-        new_price = a + (a * (rate *0.01))
-        new_price = int((new_price//100)*100) + (c - a) #100円以下切り捨て　//整数部分のみ返す
-        new_c.append(new_price)
+        if c is None:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (c - a) #100円以下切り捨て　//整数部分のみ返す
+            new_c.append(new_price)
 
     # E
     for a, e in zip(df2['A-S/A/B'], df2['E']):
-        new_price = a + (a * (rate *0.01))
-        new_price = int((new_price//100)*100) + (e - a) #100円以下切り捨て　//整数部分のみ返す
-        new_e.append(new_price)
+        if e is None:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (e - a) #100円以下切り捨て　//整数部分のみ返す
+            new_e.append(new_price)
 
     # 本革A
     for a, ha in zip(df2['A-S/A/B'], df2['本革A']):
-        new_price = a + (a * (rate *0.01))
-        new_price = int((new_price//100)*100) + (ha - a) #100円以下切り捨て　//整数部分のみ返す
-        new_ha.append(new_price)
+        if ha is None:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (ha - a) #100円以下切り捨て　//整数部分のみ返す
+            new_ha.append(new_price)
 
     for a, hb in zip(df2['A-S/A/B'], df2['本革B']):
-        new_price = a + (a * (rate *0.01))
-        new_price = int((new_price//100)*100) + (hb - a) #100円以下切り捨て　//整数部分のみ返す
-        new_hb.append(new_price)
+        if hb is None:
+            new_price =0
+        else:
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (hb - a) #100円以下切り捨て　//整数部分のみ返す
+            new_hb.append(new_price)
 
     series = df2['シリーズ']
     hinban = df2['品番']
@@ -87,7 +102,7 @@ def calc():
     column_list = df2.columns
 
     df_new = pd.DataFrame(list(zip(series, hinban, buhin1, buhin2, new_ab, new_c, new_e, new_ha, new_hb)), columns=column_list)
-    df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype('int')
+    # df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype('int')
 
     st.table(df_new)
 
