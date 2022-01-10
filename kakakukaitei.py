@@ -121,7 +121,7 @@ def calc_main():
         return processed_data
     
     df_xlsx = to_excel(df_new)
-    st.sidebar.download_button(label='ダウンロード　プロパー',
+    st.sidebar.download_button(label='Download プロパー',
                                     data=df_xlsx ,
                                     file_name= 'proper.xlsx')
 
@@ -175,7 +175,7 @@ def select_hinban_main():
 
 def xls_df_db_hk():
     # ***ファイルアップロード ***
-    uploaded_file = st.sidebar.file_uploader('部品価格表　穂高', type='xlsx', key='kakaku')
+    uploaded_file = st.sidebar.file_uploader('部品価格表　穂高', type='xlsx', key='hk')
     df = DataFrame()
     if uploaded_file:
         df = pd.read_excel(uploaded_file, sheet_name='Sheet1', index_col=0) #最初のカラムが0行目
@@ -310,7 +310,7 @@ def calc_hk():
         return processed_data
     
     df_xlsx = to_excel(df_new)
-    st.sidebar.download_button(label='ダウンロード　穂高',
+    st.sidebar.download_button(label='Download 穂高',
                                     data=df_xlsx ,
                                     file_name= 'hodaka.xlsx')
 
@@ -328,6 +328,138 @@ def select_hk():
 
     st.table(df_all)
 
+# *************** nafco IDC *******************
+
+def xls_df_db_in():
+    # ***ファイルアップロード ***
+    uploaded_file = st.sidebar.file_uploader('部品価格表　IDC/ナフコ', type='xlsx', key='in')
+    df = DataFrame()
+    if uploaded_file:
+        df = pd.read_excel(uploaded_file, sheet_name='Sheet1', index_col=0)
+        st.info('ファイルのアップロードとデータベースへの格納が完了しました。')
+    
+    global conn
+    conn = sqlite3.connect(db_name) 
+    # dbファイルと接続
+    # cbファイルがあれば読み込む。無い場合は自動的に作る。
+
+    df.to_sql('in_table', conn, if_exists='replace') #テーブル名、DB
+    conn.close()
+
+def calc_in():
+    conn = sqlite3.connect(db_name)
+    #c = conn.cursor()
+    query_select = '''
+    select * from in_table
+    '''
+    # c.execute(query_select)
+    # output = c.fetchall() #リストで取得
+    df_in = pd.read_sql_query(query_select, conn) #DBから全情報取り出し　df化
+    conn.close()
+
+    rate =st.number_input('UP率を入力してください。　半角数字　％')
+    
+    new_ab =[]
+    new_c = []
+    new_e = []
+    new_ha = []
+    new_hb = []
+
+    # A-S/A/B
+    for a in df_in['A-S・A・B']:
+        if a == 0:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 #100円以下切り捨て　//整数部分のみ返す 
+        new_ab.append(new_price)
+
+    # C
+    for a, c in zip(df_in['A-S・A・B'], df_in['C']):
+        if c == 0:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (c - a) #100円以下切り捨て　//整数部分のみ返す
+        new_c.append(new_price)
+
+    # E
+    for a, e in zip(df_in['A-S・A・B'], df_in['E']):
+        if e == 0:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (e - a) #100円以下切り捨て　//整数部分のみ返す
+        new_e.append(new_price)
+
+    # 本革A
+    for a, ha in zip(df_in['A-S・A・B'], df_in['本革A']):
+        if ha == 0:
+            new_price =0
+        else:    
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (ha - a) #100円以下切り捨て　//整数部分のみ返す
+        new_ha.append(new_price)
+
+    for a, hb in zip(df_in['A-S・A・B'], df_in['本革B']):
+        if hb == 0:
+            new_price =0
+        else:
+            new_price = a + (a * (rate *0.01))
+            new_price = (new_price//100)*100 + (hb - a) #100円以下切り捨て　//整数部分のみ返す
+        new_hb.append(new_price)
+
+    series = df_in['シリーズ']
+    hinban = df_in['品番']
+    buhin1 = df_in['部品1']
+    buhin2 = df_in['部品2']
+    column_list = df_in.columns
+
+    df_new = pd.DataFrame(list(zip(series, hinban, buhin1, buhin2, new_ab, new_c, new_e, new_ha, new_hb)), columns=column_list)
+    df_new[['A-S・A・B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S・A・B', 'C', 'E', '本革A', '本革B']].fillna(0).astype(int) #int型に変換
+    st.caption('上位30件のみ表示')
+    st.table(df_new.head(30))
+
+    def to_excel(df):
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, index = False, sheet_name='Sheet1')
+        workbook  = writer.book
+        worksheet = writer.sheets['Sheet1']
+        format1 = workbook.add_format({'num_format': '0.00'}) # Tried with '0%' and '#,##0.00' also.
+        worksheet.set_column('A:A', None, format1) # Say Data are in column A
+        writer.save()
+        processed_data = output.getvalue()
+        return processed_data
+    
+    df_xlsx = to_excel(df_new)
+    st.sidebar.download_button(label='Download IDC/ナフコ',
+                                    data=df_xlsx ,
+                                    file_name= 'idc_nafco.xlsx')
+
+def select_series_in():
+    conn = sqlite3.connect(db_name)
+    #c = conn.cursor()
+    query_select = '''
+    select * from in_table
+    '''
+    # c.execute(query_select)
+    # output = c.fetchall() #リストで取得
+    df_in = pd.read_sql_query(query_select, conn) #DBから全情報取り出し　df化
+
+    conn.close()
+
+    # *** selectbox シリーズ***
+    series_list_in = df_in['シリーズ'].unique()
+    option_series = st.selectbox(
+        'series:',
+        series_list_in,   
+    ) 
+
+    df_result = df_in[df_in['シリーズ']== option_series]
+    df_result[['A-S・A・B', 'C', 'E', '本革A', '本革B']] = df_result[['A-S・A・B', 'C', 'E', '本革A', '本革B']].astype(int)
+    st.table(df_result)
+
 def main():
     # アプリケーション名と対応する関数のマッピング
     apps = {
@@ -340,6 +472,10 @@ def main():
         '価格表表示hk': select_hk,
         'Excel読み込みhk': xls_df_db_hk,
         '価格改定計算hk': calc_hk,
+        '--IDC/ナフコ': None,
+        'シリーズから検索in': select_series_in,
+        'Excel読み込みin': xls_df_db_in,
+        '価格改定計算in': calc_in,
         
         
     }
