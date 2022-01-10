@@ -103,8 +103,8 @@ def calc():
 
     df_new = pd.DataFrame(list(zip(series, hinban, buhin1, buhin2, new_ab, new_c, new_e, new_ha, new_hb)), columns=column_list)
     # df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype('int')
-
-    st.table(df_new)
+    st.caption('上位30件のみ表示')
+    st.table(df_new.head(30))
 
     def to_excel(df):
         output = BytesIO()
