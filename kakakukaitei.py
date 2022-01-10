@@ -102,7 +102,7 @@ def calc():
     column_list = df2.columns
 
     df_new = pd.DataFrame(list(zip(series, hinban, buhin1, buhin2, new_ab, new_c, new_e, new_ha, new_hb)), columns=column_list)
-    # df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype('int')
+    df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_new[['A-S/A/B', 'C', 'E', '本革A', '本革B']].fillna(0).astype(int) #int型に変換
     st.caption('上位30件のみ表示')
     st.table(df_new.head(30))
 
@@ -143,6 +143,7 @@ def select_series():
     ) 
 
     df_result = df_all[df_all['シリーズ']== option_series]
+    df_result[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_result[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype(int)
     st.table(df_result)
 
 def select_hinban():
@@ -164,6 +165,7 @@ def select_hinban():
     st.caption('品番の先頭2文字を入力')
 
     df_result = df_all[df_all['頭品番']==hinban]
+    df_result[['A-S/A/B', 'C', 'E', '本革A', '本革B']] = df_result[['A-S/A/B', 'C', 'E', '本革A', '本革B']].astype(int)
 
     st.table(df_result)
 
